@@ -5,6 +5,11 @@ import { CLOCK_JS } from './page/generated.js'
 
 export type Mode = 'scene' | 'clock'
 
+/** What the injected clock (src/page/clock.ts) adds to the page. */
+interface ClockWindow {
+  __pagereel?: { advanceTo(ms: number, stepMs: number): Promise<void> }
+}
+
 export interface SceneInfo {
   duration?: number
   fps?: number
@@ -120,10 +125,10 @@ export async function openPage(browser: Browser, url: string, o: OpenOptions): P
     let current = 0
     const clockStep = async (target: number) => {
       try {
-        await page.evaluate(([ms, step]) => window.__pagereel?.advanceTo(ms, step), [
-          target * 1000,
-          1000 / o.fps,
-        ] as const)
+        await page.evaluate(
+          ([ms, step]) => (window as unknown as ClockWindow).__pagereel?.advanceTo(ms, step),
+          [target * 1000, 1000 / o.fps] as const,
+        )
       } catch (err) {
         throw new PagereelError(
           `The page clock failed at t=${target.toFixed(3)}s: ${firstLine(err)}`,

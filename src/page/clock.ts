@@ -23,6 +23,8 @@ declare global {
       now(): number
       advance(ms: number): Promise<void>
       advanceTo(ms: number, stepMs: number): Promise<void>
+      /** The browser's own requestAnimationFrame, for the preview player. */
+      realFrame(cb: FrameRequestCallback): number
     }
   }
 }
@@ -32,6 +34,7 @@ const MAX_RUNS = 10_000
 const config: Config = window.__pagereelConfig ?? { seed: 1, epoch: Date.now() }
 const RealDate = Date
 const realSetTimeout = window.setTimeout.bind(window)
+const realFrame = window.requestAnimationFrame.bind(window)
 
 let now = 0
 
@@ -167,6 +170,7 @@ async function advance(target: number) {
 
 window.__pagereel = {
   now: () => now,
+  realFrame,
   advance,
   async advanceTo(target, step) {
     while (now + step < target - 1e-6) await advance(now + step)
