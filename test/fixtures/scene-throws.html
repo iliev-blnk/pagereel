@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#fff}#b{position:absolute;top:40px;left:0;width:40px;height:40px;background:#f00}</style>
+<div id="b"></div>
+<script>
+  window.pagereel = {
+    duration: 1, fps: 30,
+    seek(t) {
+      if (t > 0.3) throw new Error('boom')
+      document.getElementById('b').style.left = t * 100 + 'px'
+    },
+  }
+</script>

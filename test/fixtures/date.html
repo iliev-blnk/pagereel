@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#fff}#b{position:absolute;top:40px;left:0;width:40px;height:40px;background:#f00}</style>
+<style>#b{width:0}</style>
+<div id="b"></div>
+<script>
+  const epoch = Number(new URLSearchParams(location.search).get('epoch'))
+  function frame() {
+    document.getElementById('b').style.width = (Date.now() - epoch) / 10 + 'px'
+    if (new Date().getTime() !== Date.now()) document.body.style.background = '#000'
+    requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
+</script>

