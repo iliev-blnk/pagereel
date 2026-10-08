@@ -171,3 +171,21 @@ describe('capture', () => {
     expect(pixel(png, 120, 120)).toEqual([255, 0, 0, 255])
   })
 })
+
+describe('frame accounting', () => {
+  it('runs one animation frame per goto, even for the time the page is already at', async () => {
+    const a = await openPage(browser, url('random.html'), base)
+    const b = await openPage(browser, url('random.html'), base)
+    try {
+      await a.goto(0)
+      await a.goto(1 / 30)
+      await b.goto(1 / 30)
+      const pa = decode(await a.capture())
+      const pb = decode(await b.capture())
+      expect(Buffer.compare(pa.data, pb.data)).toBe(0)
+    } finally {
+      await a.close()
+      await b.close()
+    }
+  })
+})

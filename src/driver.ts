@@ -144,6 +144,9 @@ export async function openPage(browser: Browser, url: string, o: OpenOptions): P
           if (t < current - 1e-9) {
             throw new PagereelError('Clock-mode pages can only move forward in time.')
           }
+          // Already showing this time: advancing again would run the page's
+          // frame callbacks twice for one frame.
+          if (Math.abs(t - current) < 1e-9) return
           return clockStep(t)
         }
         try {
