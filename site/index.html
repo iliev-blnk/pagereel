@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>pagereel — render any web page to video</title>
+  <meta name="description" content="Videos rendered by pagereel, next to the pages they came from.">
+  <style>
+    :root { --bg: #fff; --fg: #111; --muted: #6b6b6b; --line: #e6e6e6; --code: #f4f4f5; color-scheme: light dark; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0c0c0e; --fg: #f1f1f1; --muted: #9a9a9a; --line: #26262b; --code: #17171a; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    main { width: min(920px, 100%); margin: 0 auto; padding: 72px 20px 96px; }
+    h1 { font-size: 36px; letter-spacing: -0.02em; margin: 0 0 6px; }
+    .lede { font-size: 19px; color: var(--muted); margin: 0 0 24px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
+    pre { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 0; }
+    .links { display: flex; gap: 20px; margin: 18px 0 0; }
+    .links a { color: inherit; }
+    section { margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--line); }
+    video { display: block; width: 100%; height: auto; border-radius: 12px; background: #000; }
+    .square video { width: min(560px, 100%); }
+    h2 { font-size: 22px; margin: 20px 0 4px; }
+    .mode { color: var(--muted); font-size: 14px; margin: 0 0 10px; }
+    section p { margin: 0 0 14px; max-width: 62ch; }
+    section a { color: inherit; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>pagereel</h1>
+    <p class="lede">Render any web page to video. Every video below was rendered by pagereel from the page linked under it, on every push to the repository.</p>
+    <pre>npm install pagereel
+npx pagereel render page.html --duration 6 -o out.mp4</pre>
+    <div class="links">
+      <a href="https://github.com/iliev-blnk/pagereel">GitHub</a>
+      <a href="https://www.npmjs.com/package/pagereel">npm</a>
+    </div>
+
+    <section>
+      <video src="media/css-only.mp4" autoplay muted loop playsinline></video>
+      <h2>CSS only</h2>
+      <p class="mode">Clock mode · no JavaScript, no pagereel code</p>
+      <p>Four rows of CSS keyframes. pagereel pauses every animation and places it at each frame's time, so the render is exact and loops.</p>
+      <pre>pagereel render examples/css-only/index.html --duration 6 -o css-only.mp4</pre>
+      <p><a href="https://github.com/iliev-blnk/pagereel/blob/main/examples/css-only/index.html">View source</a></p>
+    </section>
+
+    <section>
+      <video src="media/canvas.mp4" autoplay muted loop playsinline></video>
+      <h2>Canvas sketch</h2>
+      <p class="mode">Clock mode · requestAnimationFrame, performance.now, Math.random</p>
+      <p>An ordinary animation loop with 1,400 particles. The virtual clock drives its frames and seeds its randomness, so parallel workers produce one seamless video.</p>
+      <pre>pagereel render examples/canvas/index.html --duration 8 -o canvas.mp4</pre>
+      <p><a href="https://github.com/iliev-blnk/pagereel/blob/main/examples/canvas/index.html">View source</a></p>
+    </section>
+
+    <section class="square">
+      <video src="media/one-shape.mp4" autoplay muted loop playsinline controls></video>
+      <h2>One Shape</h2>
+      <p class="mode">Scene mode · pagereel/motion springs, pagereel/audio soundtrack</p>
+      <p>A 12-second UI film where one shape morphs through five states. The page paints any moment with <code>seek(t)</code>; picture and synthesised sound share one beat grid. Unmute it.</p>
+      <pre>pagereel render examples/one-shape/index.html --root . -o one-shape.mp4</pre>
+      <p><a href="https://github.com/iliev-blnk/pagereel/tree/main/examples/one-shape">View source</a></p>
+    </section>
+  </main>
+</body>
+</html>

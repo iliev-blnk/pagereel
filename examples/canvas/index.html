@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Canvas</title>
+  <!--
+    An ordinary requestAnimationFrame sketch using performance.now() and
+    Math.random(). pagereel's clock makes it render the same way every time:
+    pagereel render examples/canvas/index.html --duration 8 -o canvas.mp4
+  -->
+  <style>html, body { margin: 0; background: #0c0c0e; overflow: hidden; } canvas { display: block; }</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script>
+    const canvas = document.getElementById('c')
+    const W = innerWidth
+    const H = innerHeight
+    canvas.width = W
+    canvas.height = H
+    const g = canvas.getContext('2d')
+
+    // Smooth value noise on a lattice of random values.
+    const N = 64
+    const lattice = Array.from({ length: N * N }, () => Math.random())
+    const at = (x, y) => lattice[((y % N) + N) % N * N + (((x % N) + N) % N)]
+    const smooth = (t) => t * t * (3 - 2 * t)
+    function noise(x, y) {
+      const xi = Math.floor(x), yi = Math.floor(y)
+      const u = smooth(x - xi), v = smooth(y - yi)
+      const a = at(xi, yi), b = at(xi + 1, yi), c = at(xi, yi + 1), d = at(xi + 1, yi + 1)
+      return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+    }
+
+    const particles = Array.from({ length: 1400 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      blue: Math.random() < 0.12,
+    }))
+
+    g.fillStyle = '#0c0c0e'
+    g.fillRect(0, 0, W, H)
+
+    let last = performance.now()
+    function frame() {
+      const now = performance.now()
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      const time = now / 1000
+
+      g.fillStyle = 'rgba(12, 12, 14, 0.06)'
+      g.fillRect(0, 0, W, H)
+      g.lineWidth = 1.4
+      for (const p of particles) {
+        const angle = noise(p.x / 220, p.y / 220 + time * 0.08) * Math.PI * 4
+        const nx = p.x + Math.cos(angle) * 140 * dt
+        const ny = p.y + Math.sin(angle) * 140 * dt
+        g.strokeStyle = p.blue ? 'rgba(61, 90, 254, 0.9)' : 'rgba(244, 244, 245, 0.55)'
+        g.beginPath()
+        g.moveTo(p.x, p.y)
+        g.lineTo(nx, ny)
+        g.stroke()
+        p.x = nx
+        p.y = ny
+        if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) {
+          p.x = Math.random() * W
+          p.y = Math.random() * H
+        }
+      }
+      requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  </script>
+</body>
+</html>

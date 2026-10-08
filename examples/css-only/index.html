@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CSS only</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800&display=block" rel="stylesheet">
+  <!--
+    No JavaScript and no pagereel code: plain CSS keyframes.
+    pagereel render examples/css-only/index.html --duration 6 -o css-only.mp4
+    Every row's period divides 6 s, so the render loops seamlessly.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #0c0c0e; overflow: hidden; }
+    body {
+      display: flex; flex-direction: column; justify-content: center; gap: 10px;
+      font: 800 150px/1 Inter, system-ui, sans-serif; letter-spacing: -0.035em;
+      color: #f4f4f5; text-transform: uppercase;
+    }
+    .row { display: flex; white-space: nowrap; }
+    .row span { padding-right: 0.45em; }
+    .row > div { display: flex; animation: left var(--d) linear infinite; }
+    .row.right > div { animation-name: right; }
+    .outline { color: transparent; -webkit-text-stroke: 2px #4a4a52; }
+    .blue { color: #3d5afe; }
+    @keyframes left { to { transform: translateX(-50%); } }
+    @keyframes right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  </style>
+</head>
+<body>
+  <div class="row outline" style="--d: 6s"><div><span>Any page</span><span>Any page</span><span>Any page</span><span>Any page</span><span>Any page</span><span>Any page</span></div></div>
+  <div class="row right" style="--d: 3s"><div><span>Render</span><span>Render</span><span>Render</span><span>Render</span><span>Render</span><span>Render</span><span>Render</span><span>Render</span></div></div>
+  <div class="row blue" style="--d: 2s"><div><span>to video</span><span>to video</span><span>to video</span><span>to video</span><span>to video</span><span>to video</span></div></div>
+  <div class="row right outline" style="--d: 6s"><div><span>frame by frame</span><span>frame by frame</span><span>frame by frame</span><span>frame by frame</span></div></div>
+</body>
+</html>

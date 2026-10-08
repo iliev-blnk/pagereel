@@ -4,3 +4,4 @@ src/page/generated.ts
 .superpowers
 *.log
 /out
+site/media

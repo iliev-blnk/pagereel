@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>One Shape</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800&display=block" rel="stylesheet">
+  <style>html, body { margin: 0; background: #0c0c0e; } canvas { display: block; }</style>
+  <script type="importmap">{ "imports": { "pagereel/motion": "../../dist/motion.js" } }</script>
+</head>
+<body>
+  <!--
+    Scene mode: scene.js sets window.pagereel = { duration, fps, seek(t), … }.
+    Render from the repo root so ../../dist is reachable:
+    pagereel render examples/one-shape/index.html --root . -o one-shape.mp4
+  -->
+  <script type="module" src="./scene.js"></script>
+</body>
+</html>
