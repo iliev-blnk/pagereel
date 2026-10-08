@@ -54,6 +54,16 @@ describe('resolveSource', () => {
     }
   })
 
+  it('answers a malformed path with 400 and keeps serving', async () => {
+    const s = await resolveSource('test/fixtures/hello.html')
+    try {
+      expect(await rawGet(s.url, '/%E0%A4%A')).toBe(400)
+      expect((await fetch(s.url)).status).toBe(200)
+    } finally {
+      await s.close()
+    }
+  })
+
   it('rejects a missing file', async () => {
     await expect(resolveSource('test/fixtures/missing.html')).rejects.toThrow(PagereelError)
     await expect(resolveSource('test/fixtures/missing.html')).rejects.toThrow(/File not found/)

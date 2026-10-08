@@ -53,7 +53,6 @@ export async function render(input: RenderOptions): Promise<RenderResult> {
     browser = await launchBrowser()
     const { mode, scene } = await detectMode(browser, source.url, input.mode)
     const o = resolveOptions(input, mode, scene)
-    output = o.output
 
     const first = Math.round(o.from * o.fps)
     const last = Math.round(o.to * o.fps)
@@ -94,6 +93,8 @@ export async function render(input: RenderOptions): Promise<RenderResult> {
       const segments = slices.map((_, i) =>
         join(tmp as string, `${String(i).padStart(3, '0')}.mkv`),
       )
+      // From here on ffmpeg writes the output, so a failure leaves a partial file.
+      output = o.output
       await encodeFinal(ffmpeg, segments, { ...o, format: o.format, signal: stop.signal })
     }
     finished = true
@@ -108,6 +109,8 @@ export async function render(input: RenderOptions): Promise<RenderResult> {
     await browser?.close().catch(() => {})
     await source.close()
     if (tmp) await rm(tmp, { recursive: true, force: true })
-    if (!finished && output && format !== 'png') await rm(output, { force: true })
+    // Only a partial file from our own encode is removed; an earlier render at
+    // the same path survives a failure before encoding.
+    if (!finished && output) await rm(output, { force: true })
   }
 }

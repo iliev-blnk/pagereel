@@ -46,7 +46,12 @@ export async function resolveSource(source: string, root?: string): Promise<Sour
   if (rel.startsWith('..')) throw new PagereelError(`${source} is outside --root ${base}`)
 
   const server = createServer(async (req, res) => {
-    const path = decodeURIComponent((req.url ?? '/').split('?')[0] ?? '/')
+    let path: string
+    try {
+      path = decodeURIComponent((req.url ?? '/').split('?')[0] ?? '/')
+    } catch {
+      return res.writeHead(400).end()
+    }
     const target = resolve(base, `.${path}`)
     if (target !== base && !target.startsWith(base + sep)) return res.writeHead(403).end()
     if (path.split('/').includes('..')) return res.writeHead(403).end()

@@ -241,6 +241,13 @@ describe('render', () => {
     expect(existsSync(output)).toBe(false)
   })
 
+  it('keeps an existing output file when a render fails before encoding', async () => {
+    const output = join(out, 'keep.mp4')
+    writeFileSync(output, 'previous render')
+    await expect(render({ source: fx('scene-throws.html'), output })).rejects.toThrow(/seek failed/)
+    expect(readFileSync(output, 'utf8')).toBe('previous render')
+  })
+
   it('requires a duration in clock mode', async () => {
     await expect(render({ source: fx('css.html'), output: join(out, 'nod.mp4') })).rejects.toThrow(
       /--duration/,
