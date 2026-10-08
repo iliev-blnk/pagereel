@@ -21,7 +21,13 @@ async function open(file: string, mode: 'clock' | 'scene') {
   const page = await ctx.newPage()
   await page.goto(src.url)
   await page.locator('code').waitFor()
-  return { page, close: async () => (await ctx.close(), await src.close()) }
+  return {
+    page,
+    close: async () => {
+      await ctx.close()
+      await src.close()
+    },
+  }
 }
 
 describe('preview player', () => {
