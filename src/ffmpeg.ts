@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { writeFile } from 'node:fs/promises'
+import { rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { Format } from './options.js'
 
@@ -135,4 +135,49 @@ export async function encodeFinal(cmd: string, segments: string[], o: FinalOptio
   }
   args.push(o.output)
   await run(cmd, args, o.signal).done
+}
+
+/** Tiles images into one sheet, 480 px per cell, roughly square. */
+export async function contactSheet(cmd: string, files: string[], output: string) {
+  const list = `${output}.txt`
+  await writeFile(list, files.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n'))
+  const cols = Math.ceil(Math.sqrt(files.length))
+  const rows = Math.ceil(files.length / cols)
+  try {
+    await run(cmd, [
+      '-y',
+      '-v',
+      'error',
+      '-f',
+      'concat',
+      '-safe',
+      '0',
+      '-i',
+      list,
+      '-vf',
+      `scale=480:-2,tile=${cols}x${rows}:padding=6:color=0x444444`,
+      '-frames:v',
+      '1',
+      output,
+    ]).done
+  } finally {
+    await rm(list, { force: true })
+  }
+}
+
+/** Peak signal-to-noise ratio between two images. Infinity when identical. */
+export async function psnr(cmd: string, a: string, b: string): Promise<number> {
+  const child = spawn(cmd, ['-v', 'info', '-i', a, '-i', b, '-lavfi', 'psnr', '-f', 'null', '-'], {
+    stdio: ['ignore', 'ignore', 'pipe'],
+  })
+  children.add(child)
+  let log = ''
+  child.stderr?.on('data', (d) => {
+    log += d
+  })
+  await once(child, 'close')
+  children.delete(child)
+  const value = log.match(/average:(\S+)/)?.[1]
+  if (!value) throw new Error('ffmpeg did not report PSNR')
+  return value === 'inf' ? Number.POSITIVE_INFINITY : Number(value)
 }
