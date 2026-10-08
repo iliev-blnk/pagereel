@@ -98,7 +98,7 @@ export async function encodeFinal(cmd: string, segments: string[], o: FinalOptio
   if (withAudio && o.audio)
     args.push('-ss', String(o.from), '-t', String(o.to - o.from), '-i', o.audio)
   args.push('-map', '0:v')
-  if (withAudio) args.push('-map', '1:a?')
+  if (withAudio) args.push('-map', '1:a')
   if (o.format === 'mp4') {
     args.push(
       '-c:v',

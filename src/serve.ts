@@ -52,10 +52,29 @@ export async function resolveSource(source: string, root?: string): Promise<Sour
     if (path.split('/').includes('..')) return res.writeHead(403).end()
     try {
       const body = await readFile(target)
-      res.writeHead(200, {
-        'content-type': MIME[extname(target).toLowerCase()] ?? 'application/octet-stream',
+      const type = MIME[extname(target).toLowerCase()] ?? 'application/octet-stream'
+      const headers = {
+        'content-type': type,
         'cache-control': 'no-store',
-      })
+        'accept-ranges': 'bytes',
+      }
+      // Range requests let ffmpeg and <video>/<audio> seek inside media files.
+      const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '')
+      if (range) {
+        const size = body.length
+        let start = range[1] ? Number(range[1]) : size - Number(range[2])
+        let end = range[1] && range[2] ? Number(range[2]) : size - 1
+        if (!range[1]) start = Math.max(0, start)
+        end = Math.min(end, size - 1)
+        if (start >= size || start > end) {
+          res.writeHead(416, { 'content-range': `bytes */${size}` }).end()
+          return
+        }
+        res.writeHead(206, { ...headers, 'content-range': `bytes ${start}-${end}/${size}` })
+        res.end(body.subarray(start, end + 1))
+        return
+      }
+      res.writeHead(200, headers)
       res.end(body)
     } catch {
       res.writeHead(404).end()

@@ -36,6 +36,24 @@ describe('resolveSource', () => {
     }
   })
 
+  it('answers range requests so media can be seeked', async () => {
+    const s = await resolveSource('test/fixtures/hello.html')
+    try {
+      const res = await fetch(s.url, { headers: { range: 'bytes=0-4' } })
+      expect(res.status).toBe(206)
+      expect(res.headers.get('accept-ranges')).toBe('bytes')
+      expect(res.headers.get('content-range')).toMatch(/^bytes 0-4\/\d+$/)
+      expect(await res.text()).toBe('<!doc')
+      const open = await fetch(s.url, { headers: { range: 'bytes=10-' } })
+      expect(open.status).toBe(206)
+      expect((await open.text()).startsWith('<!doctype'.slice(10))).toBe(true)
+      const bad = await fetch(s.url, { headers: { range: 'bytes=99999-' } })
+      expect(bad.status).toBe(416)
+    } finally {
+      await s.close()
+    }
+  })
+
   it('rejects a missing file', async () => {
     await expect(resolveSource('test/fixtures/missing.html')).rejects.toThrow(PagereelError)
     await expect(resolveSource('test/fixtures/missing.html')).rejects.toThrow(/File not found/)

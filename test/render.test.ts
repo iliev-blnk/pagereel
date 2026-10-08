@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
@@ -131,6 +131,47 @@ describe('render', () => {
     const v = streams.find((s) => s.codec_type === 'video')
     expect(a?.codec_name).toBe('aac')
     expect(Number(a?.duration)).toBeCloseTo(Number(v?.duration), 0)
+  })
+
+  it('muxes the audio a scene declares, even an m4a that needs seeking', async () => {
+    const site = mkdtempSync(join(tmpdir(), 'pagereel-test-site-'))
+    // ffmpeg writes the m4a index at the end unless told otherwise, so reading
+    // it over HTTP needs range requests.
+    // Long enough that ffmpeg cannot read it in one go and has to seek.
+    const long = createMix(20, { loop: false })
+    for (let i = 0; i < 20; i++) long.pad(i, 1, [220, 277, 330])
+    long.write(join(site, 'track.wav'))
+    execFileSync('ffmpeg', [
+      '-y',
+      '-v',
+      'error',
+      '-i',
+      join(site, 'track.wav'),
+      '-c:a',
+      'aac',
+      join(site, 'track.m4a'),
+    ])
+    const html = readFileSync(fx('scene.html'), 'utf8').replace(
+      'duration: 3,',
+      "duration: 3, audio: 'track.m4a',",
+    )
+    writeFileSync(join(site, 'index.html'), html)
+    const output = join(out, 'scene-audio.mp4')
+    await render({ source: join(site, 'index.html'), output, to: 1 })
+    const audio = probe(output).streams.find((s) => s.codec_type === 'audio')
+    expect(Number(audio?.duration)).toBeGreaterThan(0.9)
+  })
+
+  it('fails loudly when the requested audio cannot be read', async () => {
+    await expect(
+      render({
+        source: fx('css.html'),
+        output: join(out, 'noaudio.mp4'),
+        duration: 0.5,
+        size: '160x90',
+        audio: fx('hello.html'),
+      }),
+    ).rejects.toThrow(/audio|ffmpeg/i)
   })
 
   it('joins worker slices without a seam in clock mode', async () => {
