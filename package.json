@@ -1,0 +1,69 @@
+{
+  "name": "pagereel",
+  "version": "0.1.0",
+  "description": "Render any web page to video.",
+  "keywords": [
+    "video",
+    "render",
+    "animation",
+    "headless",
+    "chromium",
+    "ffmpeg",
+    "motion",
+    "mp4",
+    "gif"
+  ],
+  "homepage": "https://github.com/iliev-blnk/pagereel#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iliev-blnk/pagereel.git"
+  },
+  "bugs": "https://github.com/iliev-blnk/pagereel/issues",
+  "license": "MIT",
+  "author": "Ilie Beleniuc",
+  "type": "module",
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "pagereel": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./motion": {
+      "types": "./dist/motion.d.ts",
+      "import": "./dist/motion.js"
+    },
+    "./audio": {
+      "types": "./dist/audio.d.ts",
+      "import": "./dist/audio.js"
+    }
+  },
+  "scripts": {
+    "build:page": "node scripts/build-page.mjs",
+    "build": "node scripts/build-page.mjs && tsup",
+    "test": "node scripts/build-page.mjs && vitest run",
+    "typecheck": "node scripts/build-page.mjs && tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/node": "^26.6.4",
+    "@types/pngjs": "^6.0.5",
+    "esbuild": "^0.28.2",
+    "pngjs": "^7.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
+  }
+}
