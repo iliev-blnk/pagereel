@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -24,7 +25,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: node scripts/render-examples.mjs
@@ -36,6 +37,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
