@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture Co</title>
+    <meta name="description" content="Fixture Co turns any web page into a short vertical film." />
+    <!-- og.png is not committed: test/site-kit.test.ts generates it beside a copy of this page. -->
+    <meta property="og:image" content="og.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: #0a7cff;
+        color: #fff;
+        font-family: Georgia, serif;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 24px 64px;
+        font-size: 24px;
+      }
+      /* Sized by CSS and filled with currentColor, as most inline logos are. */
+      header svg {
+        width: 48px;
+        height: 48px;
+      }
+      main {
+        padding: 48px 64px;
+        max-width: 720px;
+      }
+      h1 {
+        font-size: 80px;
+        margin: 0 0 48px;
+      }
+      p {
+        font-size: 22px;
+        line-height: 1.5;
+      }
+      .cta {
+        display: inline-block;
+        padding: 16px 32px;
+        background: #fff;
+        color: #0a7cff;
+        border-radius: 999px;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="currentColor" />
+      </svg>
+      <span>Fixture Co</span>
+    </header>
+    <main>
+      <h1>Ship reels fast</h1>
+      <h2>Any page in</h2>
+      <p>Point it at a URL and it reads the copy, the colours and the type the page already uses.</p>
+      <h2>One reel out</h2>
+      <p>Every frame is rendered from the page itself, so what you check is what you post.</p>
+      <p>Nothing to install on the page, and nothing leaves your machine.</p>
+      <a class="cta" href="#">Try it</a>
+    </main>
+  </body>
+</html>
