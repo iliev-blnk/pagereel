@@ -135,6 +135,9 @@ visualisations and anything driven by your own timeline.
 pagereel render  <url|file> [-o out.mp4] [options]   render a video or PNG frames
 pagereel stills  <url|file> [-o dir]                  frames + contact sheet + loop check
 pagereel preview <url|file>                           open the page with a scrub bar
+pagereel check   <url|file> [--target ig-reel|none]   lint a reel; exits 1 on errors
+pagereel init    <dir>                                write a starter reel that passes check
+pagereel mcp                                          serve the agent tools over stdio (MCP)
 ```
 
 | Option | |
@@ -146,12 +149,14 @@ pagereel preview <url|file>                           open the page with a scrub
 | `--scale n` | Device scale factor. A 1080x1080 page at `--scale 2` gives 2160x2160. |
 | `--from s`, `--to s` | Render part of the timeline. |
 | `--workers n` | Parallel browser pages, default up to 6. |
-| `--audio file` | Track to mux in (mp4, webm). |
+| `--audio file` | Track to mux in (mp4, webm), or for `check` to measure. |
 | `--format f` | `mp4`, `webm`, `gif` or `png`; default from the output extension. |
 | `--transparent` | Keep a transparent page background (webm, png). |
 | `--seed n`, `--epoch ms` | `Math.random` seed and `Date.now()` at t=0, in clock mode. |
 | `--root dir` | Folder to serve for a local file (default: the file's folder). |
 | `--count n`, `--at t1,t2` | Which frames `stills` captures. |
+| `--target t` | What `check` holds the page to: `ig-reel` (default) or `none`. |
+| `--json` | `check` prints its report as JSON. |
 
 `stills` writes PNGs and a `contact.png` sheet. For a scene with `loop: true` it also compares
 the first and last frame and reports whether the loop is seamless.

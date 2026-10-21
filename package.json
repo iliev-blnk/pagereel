@@ -1,7 +1,7 @@
 {
   "name": "pagereel",
-  "version": "0.1.1",
-  "description": "Render any web page to video.",
+  "version": "0.2.0",
+  "description": "Render any web page to video, lint reels for Instagram, and let an agent make them over MCP.",
   "keywords": [
     "video",
     "render",
@@ -11,7 +11,10 @@
     "ffmpeg",
     "motion",
     "mp4",
-    "gif"
+    "gif",
+    "reels",
+    "mcp",
+    "claude-code"
   ],
   "homepage": "https://github.com/iliev-blnk/pagereel#readme",
   "repository": {
