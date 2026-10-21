@@ -95,6 +95,27 @@ describe('cli', () => {
     expect(r.status, r.stderr).toBe(0)
     expect(JSON.parse(r.stdout)).toMatchObject({ errors: 0 })
   })
+
+  it('scaffolds a scene and says what to run next', () => {
+    const reel = join(dir, 'reel')
+    const r = cli('init', reel)
+    expect(r.status, r.stderr).toBe(0)
+    expect(existsSync(join(reel, 'scene.js'))).toBe(true)
+    expect(r.stdout).toContain('scene.js')
+    expect(r.stdout).toContain(`node ${join(reel, 'audio.mjs')}`)
+  })
+
+  it('refuses to scaffold into a folder that is not empty', () => {
+    const r = cli('init', 'test')
+    expect(r.status).toBe(1)
+    expect(r.stderr.trim()).toBe('pagereel: test is not empty')
+  })
+
+  it('asks for a folder to scaffold into', () => {
+    const r = cli('init')
+    expect(r.status).toBe(1)
+    expect(r.stderr).toContain('Missing folder')
+  })
 })
 
 describe('preview player', () => {

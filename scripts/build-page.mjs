@@ -1,5 +1,6 @@
-// Bundles browser-side code (virtual clock, preview player, text probe) into strings for injection.
-import { existsSync } from 'node:fs'
+// Bundles browser-side code (virtual clock, preview player, text probe) into strings for injection,
+// and the files `pagereel init` writes into a new scene.
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 
@@ -26,4 +27,31 @@ for (const [name, entry] of Object.entries(entries)) {
   })
   out += `export const ${name} = ${JSON.stringify(js.outputFiles[0].text)}\n`
 }
+
+const { version } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'))
+out += `export const VERSION = ${JSON.stringify(version)}\n`
+
+// pagereel/motion and pagereel/audio as plain ES modules, for a scene to import with no bundler.
+const modules = {
+  MOTION_JS: { entry: 'src/motion.ts', platform: 'browser' },
+  AUDIO_JS: { entry: 'src/audio.ts', platform: 'node' },
+}
+for (const [name, { entry, platform }] of Object.entries(modules)) {
+  const js = await build({
+    entryPoints: [new URL(entry, root).pathname],
+    bundle: true,
+    format: 'esm',
+    platform,
+    target: 'es2022',
+    write: false,
+  })
+  out += `export const ${name} = ${JSON.stringify(js.outputFiles[0].text)}\n`
+}
+
+const scene = new URL('templates/scene/', root)
+const template = existsSync(scene)
+  ? Object.fromEntries(readdirSync(scene).map((f) => [f, readFileSync(new URL(f, scene), 'utf8')]))
+  : {}
+out += `export const SCENE_TEMPLATE: Record<string, string> = ${JSON.stringify(template)}\n`
+
 await writeFile(new URL('src/page/generated.ts', root), out)

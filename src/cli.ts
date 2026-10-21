@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs'
+import { join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
 import { check } from './check/index.js'
 import type { CheckReport, Target } from './check/types.js'
 import { PagereelError } from './errors.js'
+import { init } from './init.js'
 import type { Format, Progress, RenderOptions } from './options.js'
 import { preview } from './preview.js'
 import { render } from './render.js'
@@ -14,6 +16,7 @@ const USAGE = `Usage:
   pagereel stills <url|file> [-o dir] [--count n | --at t1,t2]
   pagereel preview <url|file> [options]
   pagereel check <url|file> [--target ig-reel|none] [--audio file] [--json]
+  pagereel init <dir>
 
 Options:
   -o, --output     output file (render) or folder (stills)
@@ -110,10 +113,20 @@ async function main(argv: string[]) {
     console.log(USAGE)
     return
   }
-  if (!['render', 'stills', 'preview', 'check'].includes(command)) {
+  if (!['render', 'stills', 'preview', 'check', 'init'].includes(command)) {
     throw new PagereelError(`Unknown command "${command}". Run pagereel --help.`)
   }
-  if (!source) throw new PagereelError(`Missing source.\n\n${USAGE}`)
+  if (!source) {
+    throw new PagereelError(`Missing ${command === 'init' ? 'folder' : 'source'}.\n\n${USAGE}`)
+  }
+
+  if (command === 'init') {
+    const files = await init(source)
+    console.log([`${source}:`, ...files.map((f) => `  ${relative(source, f)}`)].join('\n'))
+    const next = `node ${join(source, 'audio.mjs')}, then pagereel preview ${join(source, 'index.html')}`
+    console.log(`\nNext: ${next}`)
+    return
+  }
 
   const common = {
     source,
