@@ -17,6 +17,7 @@ const USAGE = `Usage:
   pagereel preview <url|file> [options]
   pagereel check <url|file> [--target ig-reel|none] [--audio file] [--json]
   pagereel init <dir>
+  pagereel mcp                 serve the tools to an agent over stdio (MCP)
 
 Options:
   -o, --output     output file (render) or folder (stills)
@@ -113,9 +114,11 @@ async function main(argv: string[]) {
     console.log(USAGE)
     return
   }
-  if (!['render', 'stills', 'preview', 'check', 'init'].includes(command)) {
+  if (!['render', 'stills', 'preview', 'check', 'init', 'mcp'].includes(command)) {
     throw new PagereelError(`Unknown command "${command}". Run pagereel --help.`)
   }
+  // Loaded only here, so the other commands don't load the MCP SDK.
+  if (command === 'mcp') return (await import('./mcp.js')).startMcpServer()
   if (!source) {
     throw new PagereelError(`Missing ${command === 'init' ? 'folder' : 'source'}.\n\n${USAGE}`)
   }

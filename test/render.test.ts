@@ -86,6 +86,19 @@ describe('render', () => {
     expect(Number(format.duration)).toBeCloseTo(1, 1)
   })
 
+  it('reports the output size, viewport × scale, and the fps', async () => {
+    const res = await render({
+      source: fx('css.html'),
+      output: join(out, 'scaled'),
+      format: 'png',
+      duration: 0.2,
+      size: '160x90',
+      scale: 2,
+      fps: 10,
+    })
+    expect(res).toMatchObject({ frames: 2, width: 320, height: 180, fps: 10 })
+  })
+
   it('keeps transparency in webm', async () => {
     const output = join(out, 'alpha.webm')
     await render({

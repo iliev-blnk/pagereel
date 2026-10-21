@@ -168,6 +168,29 @@ export async function contactSheet(cmd: string, files: string[], output: string)
   }
 }
 
+/**
+ * An image as a JPEG no more than `maxSide` px on its long side, for handing to a model: 1568 is
+ * the largest a vision model takes without scaling it down itself.
+ */
+export async function toJpeg(cmd: string, input: string, output: string, maxSide = 1568) {
+  const fit = `scale='min(iw,${maxSide})':'min(ih,${maxSide})':force_original_aspect_ratio=decrease`
+  await run(cmd, [
+    '-y',
+    '-v',
+    'error',
+    '-i',
+    input,
+    '-vf',
+    fit,
+    '-q:v',
+    '3',
+    '-frames:v',
+    '1',
+    output,
+  ]).done
+  return output
+}
+
 /** Peak signal-to-noise ratio between two images. Infinity when identical. */
 export async function psnr(cmd: string, a: string, b: string): Promise<number> {
   const child = spawn(cmd, ['-v', 'info', '-i', a, '-i', b, '-lavfi', 'psnr', '-f', 'null', '-'], {

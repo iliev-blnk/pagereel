@@ -118,6 +118,32 @@ describe('cli', () => {
   })
 })
 
+describe('cli mcp', () => {
+  it('answers on stdout and exits when stdin closes', () => {
+    const initialize = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 't', version: '0' },
+      },
+    }
+    const r = spawnSync(process.execPath, ['dist/cli.js', 'mcp'], {
+      input: `${JSON.stringify(initialize)}\n`,
+      encoding: 'utf8',
+      timeout: 10_000,
+    })
+    expect(r.status, r.stderr).toBe(0)
+    const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+    expect(JSON.parse(r.stdout.trim().split('\n')[0] ?? '')).toMatchObject({
+      id: 1,
+      result: { serverInfo: { name: 'pagereel', version } },
+    })
+  })
+})
+
 describe('preview player', () => {
   it('formats time with the frame number', () => {
     expect(formatTime(1.5, 30)).toBe('1.50s  f45')

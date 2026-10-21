@@ -12,6 +12,10 @@ import { resolveSource } from './serve.js'
 export interface RenderResult {
   output: string
   frames: number
+  fps: number
+  /** Output pixels: the viewport × scale. */
+  width: number
+  height: number
   /** Wall-clock seconds the render took. */
   seconds: number
 }
@@ -98,7 +102,14 @@ export async function render(input: RenderOptions): Promise<RenderResult> {
       await encodeFinal(ffmpeg, segments, { ...o, format: o.format, signal: stop.signal })
     }
     finished = true
-    return { output: o.output, frames: total, seconds: (Date.now() - started) / 1000 }
+    return {
+      output: o.output,
+      frames: total,
+      fps: o.fps,
+      width: Math.round(o.width * o.scale),
+      height: Math.round(o.height * o.scale),
+      seconds: (Date.now() - started) / 1000,
+    }
   } catch (err) {
     if (input.signal?.aborted) throw new PagereelError('Render cancelled')
     throw err
