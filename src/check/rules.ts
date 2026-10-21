@@ -16,7 +16,7 @@ export const IG_REEL = {
  */
 export const PERSIST = 3
 
-/** Mean luma change from the previous frame (0–255) under which a frame counts as still. */
+/** The frame diff (0–255, see `FrameStat.diff`) under which a frame counts as still. */
 export const DEAD_DIFF = 0.5
 
 const SAFE_TOLERANCE = 4
