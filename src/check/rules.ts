@@ -41,28 +41,31 @@ interface Run {
 const range = (from: number, to: number) => `${from.toFixed(2)}–${to.toFixed(2)} s`
 
 /**
- * Runs of consecutive samples in which `test` holds for the same text. Each sample stands for
- * the `step` seconds after it, cut short at `end`, the end of the reel.
+ * Runs of consecutive samples in which `test` holds for the same text, as `keyOf` tells texts
+ * apart. Each sample stands for the `step` seconds after it, cut short at `end`, the end of the
+ * reel.
  */
 function textRuns(
   samples: TextSample[],
   step: number,
   end: number,
   test: (b: Box) => boolean,
+  keyOf: (b: Box) => string = (b) => b.key,
 ): Run[] {
   const open = new Map<string, Run>()
   const done: Run[] = []
   for (const s of samples) {
     const seen = new Set<string>()
     for (const b of s.boxes) {
-      if (seen.has(b.key) || !test(b)) continue
-      seen.add(b.key)
-      const run = open.get(b.key)
+      const key = keyOf(b)
+      if (seen.has(key) || !test(b)) continue
+      seen.add(key)
+      const run = open.get(key)
       const to = Math.min(s.t + step, end)
       if (run) {
         run.to = to
         run.boxes.push(b)
-      } else open.set(b.key, { label: b.label, from: s.t, to, boxes: [b] })
+      } else open.set(key, { label: b.label, from: s.t, to, boxes: [b] })
     }
     for (const [key, run] of open) {
       if (seen.has(key)) continue
@@ -194,7 +197,9 @@ export function readingTimeRule(
   end = Number.POSITIVE_INFINITY,
 ): Finding[] {
   const out: Finding[] = []
-  for (const r of textRuns(samples, step, end, () => true)) {
+  // A number that changes in place (a count-up, a clock) is one text being read, not many.
+  const numbersAside = (b: Box) => b.key.replace(/\d[\d.,:]*/g, '#')
+  for (const r of textRuns(samples, step, end, () => true, numbersAside)) {
     const words = Math.max(...r.boxes.map((b) => b.words))
     const need = 0.6 + words / 3.5
     const shown = r.to - r.from

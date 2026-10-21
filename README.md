@@ -78,6 +78,10 @@ Three reels made this way, unattended, from that one line each, are in the
 | [grid.md](examples/agent/gridmd) | Sonnet 5.5 | 49 | 2 | 2 → 0 | 5 min |
 | [holdshort](examples/agent/holdshort) | Sonnet 5.5 | 61 | 4 | 2 → 0 | 7 min |
 
+parlo's first run failed: `site_kit` timed out on its GitHub page, so the agent had no copy to
+use and stopped. `site_kit` no longer waits on a page's slowest request, and the second run is
+the one above.
+
 The plugin runs `pagereel mcp`, which serves six tools: `site_kit` (copy, palette, fonts and logo
 from a URL), `init` (a working reel to build on), `check`, `stills`, `frame` and `render`. Other
 MCP clients can run it too: `npx -y pagereel mcp`.
@@ -100,8 +104,9 @@ wrong on Instagram. It exits with 1 if it finds an error.
 | `flash` | more than 3 flashes in any second | |
 | `audio` | true peak above −1 dBTP | no track, or loudness outside −16 to −12 LUFS |
 
-A text problem counts once it lasts three samples (0.75 s), so text sliding in or through a mask
-isn't reported. The `flash` rule follows WCAG 2.3.1 but measures the whole frame's mean
+A text problem counts once it lasts three samples (about half a second), so text sliding in or
+through a mask isn't reported. A number that changes in place, as a count-up does, is read as one
+text. The `flash` rule follows WCAG 2.3.1 but measures the whole frame's mean
 luminance, not the flashing area, so a small flashing region can pass. `--target none` skips
 `format` and `safe-zone` for pages that aren't reels.
 

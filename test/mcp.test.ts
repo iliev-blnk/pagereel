@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, statSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -138,6 +146,17 @@ describe('pagereel mcp', () => {
     expect(res.text).toContain(first)
     expect(res.text).toContain(last)
     expect(existsSync(last)).toBe(true)
+  })
+
+  it("stills clears an earlier call's frames, but nothing else, from out/stills", async () => {
+    const scene = join(dir, 'rerun')
+    const out = join(scene, 'out', 'stills')
+    mkdirSync(out, { recursive: true })
+    copyFileSync('test/fixtures/check/good.html', join(scene, 'index.html'))
+    writeFileSync(join(out, 'notes.txt'), 'mine')
+    await call('stills', { source: join(scene, 'index.html'), at: [1] })
+    await call('stills', { source: join(scene, 'index.html'), at: [2] })
+    expect(readdirSync(out).sort()).toEqual(['000_2.00s.png', 'contact.png', 'notes.txt'])
   })
 
   it('init lists the files it wrote', async () => {

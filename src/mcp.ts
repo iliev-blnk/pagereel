@@ -1,5 +1,5 @@
 // The MCP server behind `pagereel mcp`: the library as tools an agent calls over stdio.
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -18,6 +18,9 @@ import { stills } from './stills.js'
 type Content = CallToolResult['content']
 
 const isUrl = (source: string) => /^https?:\/\//i.test(source)
+
+/** The files `stills` writes: numbered frames and the contact sheet. */
+const STILL = /^(\d{3}_\d+\.\d{2}s|contact)\.png$/
 
 const text = (text: string) => ({ type: 'text' as const, text })
 
@@ -140,6 +143,11 @@ export function createMcpServer(): McpServer {
       const outDir = isUrl(source)
         ? await mkdtemp(join(tmpdir(), 'pagereel-stills-'))
         : join(dirname(resolve(source)), 'out', 'stills')
+      // Frames from an earlier call, at times this one doesn't capture, would pass for this one's.
+      const old = await readdir(outDir).catch(() => [])
+      await Promise.all(
+        old.filter((f) => STILL.test(f)).map((f) => rm(join(outDir, f), { force: true })),
+      )
       const res = await stills({ source, count, at, outDir })
       const lines = [`Contact sheet: ${res.contactSheet}`, ...res.files]
       if (res.loop) {

@@ -228,6 +228,15 @@ describe('readingTimeRule', () => {
     expect(f[0]?.message).toContain('on screen for 0.80 s')
   })
 
+  it('counts a number that changes in place, as a count-up does, as one text', () => {
+    // 0 → 846 over 2 s, then held: every sample shows a new value of the same line.
+    const count = (t: number) => {
+      const n = String(Math.round(846 * Math.min(t / 2, 1)))
+      return [box({ key: `${n} MW`, label: `${n} MW`, words: 2 })]
+    }
+    expect(readingTimeRule(samples(16, count), STEP)).toEqual([])
+  })
+
   it('accepts one word held for 1 s', () => {
     expect(
       readingTimeRule(
