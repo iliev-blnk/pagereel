@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createMix, note, SR } from '../src/audio'
+import { loudness } from '../src/ffmpeg'
 
 const dir = mkdtempSync(join(tmpdir(), 'pagereel-audio-'))
 const hasFfmpeg = (() => {
@@ -82,5 +83,15 @@ describe('audio', () => {
       path,
     ])
     expect(probe.toString().trim()).toBe('pcm_s16le')
+  })
+
+  it.skipIf(!hasFfmpeg)('keeps a normalised track under the true peak check allows', async () => {
+    // Hats are bright: loudnorm limits them at 192 kHz, and resampling back to 48 kHz lifts them.
+    const mix = createMix(8, { loop: false })
+    for (let t = 0; t < 7.75; t += 0.25) mix.hat(t, { pan: 0.3 })
+    const path = join(dir, 'hats.wav')
+    mix.write(path, { lufs: -14 })
+    const { truePeak } = await loudness(process.env.PAGEREEL_FFMPEG ?? 'ffmpeg', path)
+    expect(truePeak).toBeLessThan(-1)
   })
 })

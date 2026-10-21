@@ -5,6 +5,8 @@ import { renameSync, writeFileSync } from 'node:fs'
 import { rng } from './motion.js'
 
 export const SR = 48000
+/** The true peak, in dBTP, that write() keeps a normalised track under. */
+const CEILING = -1.5
 
 export interface Voice {
   /** 0..1 and up. */
@@ -175,7 +177,8 @@ export function createMix(seconds: number, { loop = true }: { loop?: boolean } =
 
   /**
    * Writes a 16-bit stereo WAV, peak-limited to 0.89. With `lufs`, loudness is
-   * normalised by ffmpeg (social apps play at about -14 LUFS).
+   * normalised by ffmpeg (social apps play at about -14 LUFS) under a true peak of
+   * -1.5 dBTP, half a dB inside what pagereel check allows.
    */
   function write(
     path: string,
@@ -210,20 +213,27 @@ export function createMix(seconds: number, { loop = true }: { loop?: boolean } =
     writeFileSync(path, buf)
     if (lufs != null) {
       const tmp = `${path}.norm.wav`
-      const r = spawnSync(ffmpeg, [
-        '-y',
-        '-v',
-        'error',
-        '-i',
-        path,
-        '-af',
-        `loudnorm=I=${lufs}:TP=-1:LRA=11`,
-        '-ar',
-        String(SR),
-        tmp,
-      ])
-      if (r.status !== 0) throw new Error(`loudnorm failed: ${r.stderr}`)
-      renameSync(tmp, path)
+      const filter = (af: string) => {
+        const r = spawnSync(ffmpeg, [
+          '-y',
+          '-v',
+          'error',
+          '-i',
+          path,
+          '-af',
+          af,
+          '-ar',
+          String(SR),
+          tmp,
+        ])
+        if (r.status !== 0) throw new Error(`${af.split('=')[0]} failed: ${r.stderr}`)
+        renameSync(tmp, path)
+      }
+      filter(`loudnorm=I=${lufs}:TP=${CEILING}:LRA=11`)
+      // loudnorm limits at 192 kHz, and resampling back to 48 kHz can lift bright sounds (hats)
+      // over its ceiling again: measure the result as check does and turn down what is over.
+      const over = truePeak(ffmpeg, path) - CEILING
+      if (over > 0) filter(`volume=${(-over).toFixed(2)}dB`)
     }
   }
 
@@ -231,3 +241,17 @@ export function createMix(seconds: number, { loop = true }: { loop?: boolean } =
 }
 
 export type Mix = ReturnType<typeof createMix>
+
+/** A file's true peak in dBTP, read from the same ebur128 summary pagereel check reads. */
+function truePeak(ffmpeg: string, path: string) {
+  const r = spawnSync(
+    ffmpeg,
+    ['-nostats', '-i', path, '-af', 'ebur128=peak=true', '-f', 'null', '-'],
+    // ebur128 logs a line per 100 ms of audio before its summary.
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+  )
+  const summary = r.stderr.slice(r.stderr.lastIndexOf('Summary:'))
+  const peak = /True peak:\s+Peak:\s+(-?inf|-?[\d.]+) dBFS/.exec(summary)?.[1]
+  if (r.status !== 0 || !peak) throw new Error(`ebur128 failed: ${r.stderr.slice(-500)}`)
+  return peak.endsWith('inf') ? -Infinity : Number(peak)
+}
