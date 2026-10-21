@@ -1,3 +1,4 @@
+import { setTimeout as wait } from 'node:timers/promises'
 import { type Browser, chromium, type Page } from 'playwright-core'
 import { findChrome } from './env.js'
 import { PagereelError } from './errors.js'
@@ -34,8 +35,10 @@ export interface OpenOptions {
 export interface Driver {
   /** Show time `t` (seconds). Clock mode only moves forward. */
   goto(t: number, frame?: number): Promise<void>
-  /** PNG of the viewport at width·scale × height·scale. */
-  capture(): Promise<Buffer>
+  /** PNG of the viewport at width·scale × height·scale; `scale` overrides the page's own. */
+  capture(scale?: number): Promise<Buffer>
+  /** Runs a script in the page and returns its completion value. */
+  evaluate<T>(js: string): Promise<T>
   close(): Promise<void>
 }
 
@@ -52,6 +55,30 @@ const firstLine = (err: unknown) =>
     .replace(/^page\.evaluate: /, '')
     .replace(/^Error: /, '')
     .split('\n')[0] ?? ''
+
+/**
+ * Runs `fn`, and while it fails with an error `transient` accepts, runs it again after each
+ * of `delays` (ms) in turn. Rethrows the last error.
+ */
+export async function retry<T>(
+  fn: () => Promise<T>,
+  transient: (err: unknown) => boolean,
+  delays: readonly number[],
+): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      const delay = delays[i]
+      if (delay === undefined || !transient(err)) throw err
+      await wait(delay)
+    }
+  }
+}
+
+/** Chromium now and then fails a screenshot, most often the first one after a page loads. */
+const CAPTURE_RETRIES = [50, 150, 400]
+const failedCapture = (err: unknown) => firstLine(err).includes('Unable to capture screenshot')
 
 async function load(page: Page, url: string) {
   try {
@@ -166,16 +193,35 @@ export async function openPage(browser: Browser, url: string, o: OpenOptions): P
           )
         }
       },
-      async capture() {
-        const { data } = await cdp.send('Page.captureScreenshot', {
-          format: 'png',
-          optimizeForSpeed: true,
-          captureBeyondViewport: false,
-          // Without an explicit clip scale, CDP captures CSS pixels and ignores
-          // the context's device scale factor.
-          clip: { x: 0, y: 0, width: o.width, height: o.height, scale: o.scale },
-        })
+      async capture(scale) {
+        const { data } = await retry(
+          () =>
+            cdp.send('Page.captureScreenshot', {
+              format: 'png',
+              optimizeForSpeed: true,
+              captureBeyondViewport: false,
+              // Without an explicit clip scale, CDP captures CSS pixels and ignores
+              // the context's device scale factor.
+              clip: { x: 0, y: 0, width: o.width, height: o.height, scale: scale ?? o.scale },
+            }),
+          failedCapture,
+          CAPTURE_RETRIES,
+        )
         return Buffer.from(data, 'base64')
+      },
+      async evaluate<T>(js: string) {
+        // Through CDP: unlike page.evaluate it runs a whole script (the bundled probe is one),
+        // and unlike a <script> tag it cannot be blocked by the page's Content-Security-Policy.
+        const { result, exceptionDetails } = await cdp.send('Runtime.evaluate', {
+          expression: js,
+          returnByValue: true,
+          awaitPromise: true,
+        })
+        if (exceptionDetails) {
+          const detail = exceptionDetails.exception?.description ?? exceptionDetails.text
+          throw new PagereelError(`A script in the page failed: ${firstLine(detail)}`)
+        }
+        return result.value as T
       },
       close: () => context.close(),
     }

@@ -54,14 +54,14 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "playwright-core": "^1.63.0"
+    "playwright-core": "^1.63.0",
+    "pngjs": "^7.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@types/node": "^26.6.4",
     "@types/pngjs": "^6.0.5",
     "esbuild": "^0.28.2",
-    "pngjs": "^7.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^5.0.3"

@@ -40,8 +40,16 @@ interface Run {
 
 const range = (from: number, to: number) => `${from.toFixed(2)}–${to.toFixed(2)} s`
 
-/** Runs of consecutive samples in which `test` holds for the same text. */
-function textRuns(samples: TextSample[], step: number, test: (b: Box) => boolean): Run[] {
+/**
+ * Runs of consecutive samples in which `test` holds for the same text. Each sample stands for
+ * the `step` seconds after it, cut short at `end`, the end of the reel.
+ */
+function textRuns(
+  samples: TextSample[],
+  step: number,
+  end: number,
+  test: (b: Box) => boolean,
+): Run[] {
   const open = new Map<string, Run>()
   const done: Run[] = []
   for (const s of samples) {
@@ -50,10 +58,11 @@ function textRuns(samples: TextSample[], step: number, test: (b: Box) => boolean
       if (seen.has(b.key) || !test(b)) continue
       seen.add(b.key)
       const run = open.get(b.key)
+      const to = Math.min(s.t + step, end)
       if (run) {
-        run.to = s.t + step
+        run.to = to
         run.boxes.push(b)
-      } else open.set(b.key, { label: b.label, from: s.t, to: s.t + step, boxes: [b] })
+      } else open.set(b.key, { label: b.label, from: s.t, to, boxes: [b] })
     }
     for (const [key, run] of open) {
       if (seen.has(key)) continue
@@ -114,7 +123,12 @@ export function formatRule(o: {
 }
 
 /** Text under Instagram's interface. `k` scales the viewport to 1080 wide. */
-export function safeZoneRule(samples: TextSample[], step: number, k: number): Finding[] {
+export function safeZoneRule(
+  samples: TextSample[],
+  step: number,
+  k: number,
+  end = Number.POSITIVE_INFINITY,
+): Finding[] {
   const { top, bottom, right, rightFromY } = IG_REEL.safe
   const maxY = IG_REEL.height - bottom
   const maxX = IG_REEL.width - right
@@ -126,7 +140,7 @@ export function safeZoneRule(samples: TextSample[], step: number, k: number): Fi
       return `the like, comment and share buttons (right ${right} px)`
     return undefined
   }
-  return lasting(textRuns(samples, step, (b) => zone(b) !== undefined)).map((r) => ({
+  return lasting(textRuns(samples, step, end, (b) => zone(b) !== undefined)).map((r) => ({
     id: 'safe-zone',
     severity: 'error',
     from: r.from,
@@ -137,8 +151,13 @@ export function safeZoneRule(samples: TextSample[], step: number, k: number): Fi
 }
 
 /** Type too small to read on a phone. `k` scales the viewport to 1080 wide. */
-export function textSizeRule(samples: TextSample[], step: number, k: number): Finding[] {
-  return lasting(textRuns(samples, step, (b) => b.fontPx * k < WARN_PX)).map((r) => {
+export function textSizeRule(
+  samples: TextSample[],
+  step: number,
+  k: number,
+  end = Number.POSITIVE_INFINITY,
+): Finding[] {
+  return lasting(textRuns(samples, step, end, (b) => b.fontPx * k < WARN_PX)).map((r) => {
     const px = median(r.boxes.map((b) => b.fontPx * k))
     const error = px < MIN_PX
     return {
@@ -153,8 +172,12 @@ export function textSizeRule(samples: TextSample[], step: number, k: number): Fi
 }
 
 /** Text cut off by the frame or by an overflow-hidden box. */
-export function clippedRule(samples: TextSample[], step: number): Finding[] {
-  return lasting(textRuns(samples, step, (b) => b.clipped)).map((r) => ({
+export function clippedRule(
+  samples: TextSample[],
+  step: number,
+  end = Number.POSITIVE_INFINITY,
+): Finding[] {
+  return lasting(textRuns(samples, step, end, (b) => b.clipped)).map((r) => ({
     id: 'text-clipped',
     severity: 'error',
     from: r.from,
@@ -165,12 +188,16 @@ export function clippedRule(samples: TextSample[], step: number): Finding[] {
 }
 
 /** Text that leaves before it can be read: 0.6 s plus 1 s per 3.5 words. */
-export function readingTimeRule(samples: TextSample[], step: number): Finding[] {
+export function readingTimeRule(
+  samples: TextSample[],
+  step: number,
+  end = Number.POSITIVE_INFINITY,
+): Finding[] {
   const out: Finding[] = []
-  for (const r of textRuns(samples, step, () => true)) {
+  for (const r of textRuns(samples, step, end, () => true)) {
     const words = Math.max(...r.boxes.map((b) => b.words))
     const need = 0.6 + words / 3.5
-    const shown = r.boxes.length * step
+    const shown = r.to - r.from
     if (shown + EPS >= need) continue
     out.push({
       id: 'reading-time',
@@ -185,9 +212,13 @@ export function readingTimeRule(samples: TextSample[], step: number): Finding[] 
 }
 
 /** Fully opaque text that doesn't stand out from what is behind it. */
-export function contrastRule(samples: TextSample[], step: number): Finding[] {
+export function contrastRule(
+  samples: TextSample[],
+  step: number,
+  end = Number.POSITIVE_INFINITY,
+): Finding[] {
   const low = (b: Box) => b.opacity >= 0.95 && b.contrast !== undefined && b.contrast < MIN_CONTRAST
-  return lasting(textRuns(samples, step, low)).map((r) => {
+  return lasting(textRuns(samples, step, end, low)).map((r) => {
     const min = Math.min(...r.boxes.map((b) => b.contrast ?? MIN_CONTRAST))
     return {
       id: 'contrast',

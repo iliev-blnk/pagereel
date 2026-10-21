@@ -1,3 +1,5 @@
+export { type CheckOptions, check } from './check/index.js'
+export type { CheckReport, Finding, RuleId, Severity, Target } from './check/types.js'
 export type { Mode, SceneInfo } from './driver.js'
 export { PagereelError } from './errors.js'
 export type { Format, Progress, RenderOptions } from './options.js'

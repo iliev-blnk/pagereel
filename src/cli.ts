@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
+import { check } from './check/index.js'
+import type { CheckReport, Target } from './check/types.js'
 import { PagereelError } from './errors.js'
-import type { Format, RenderOptions } from './options.js'
+import type { Format, Progress, RenderOptions } from './options.js'
 import { preview } from './preview.js'
 import { render } from './render.js'
 import { stills } from './stills.js'
@@ -11,6 +13,7 @@ const USAGE = `Usage:
   pagereel render <url|file> [-o out.mp4] [options]
   pagereel stills <url|file> [-o dir] [--count n | --at t1,t2]
   pagereel preview <url|file> [options]
+  pagereel check <url|file> [--target ig-reel|none] [--audio file] [--json]
 
 Options:
   -o, --output     output file (render) or folder (stills)
@@ -20,7 +23,7 @@ Options:
   --scale n        device scale factor, output is size × scale
   --from s --to s  render only part of the timeline
   --workers n      parallel browser pages
-  --audio file     audio track to mux in
+  --audio file     audio track to mux in, or to measure with check
   --format f       mp4, webm, gif or png (default: from the output extension)
   --transparent    keep the page background transparent (webm, png)
   --mode m         auto, scene or clock
@@ -29,6 +32,8 @@ Options:
   --root dir       folder to serve for a local file
   --count n        stills: evenly spaced frames (default 16)
   --at t1,t2       stills: exact times
+  --target t       check: ig-reel (default) or none
+  --json           check: print the report as JSON
   -h, --help       show this help
   -v, --version    show the version`
 
@@ -66,6 +71,8 @@ function parse(argv: string[]) {
       root: { type: 'string' },
       count: { type: 'string' },
       at: { type: 'string' },
+      target: { type: 'string' },
+      json: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
     },
@@ -103,7 +110,7 @@ async function main(argv: string[]) {
     console.log(USAGE)
     return
   }
-  if (!['render', 'stills', 'preview'].includes(command)) {
+  if (!['render', 'stills', 'preview', 'check'].includes(command)) {
     throw new PagereelError(`Unknown command "${command}". Run pagereel --help.`)
   }
   if (!source) throw new PagereelError(`Missing source.\n\n${USAGE}`)
@@ -123,6 +130,32 @@ async function main(argv: string[]) {
 
   if (command === 'preview') return preview(common)
 
+  const tty = process.stderr.isTTY
+  const onProgress = tty
+    ? ({ frame, total }: Progress) => process.stderr.write(`\rframes ${frame}/${total}`)
+    : undefined
+
+  if (command === 'check') {
+    const report = await check({
+      source,
+      target: values.target as Target | undefined,
+      audio: values.audio,
+      duration: num.duration,
+      size: values.size,
+      fps: num.fps,
+      scale: num.scale,
+      mode,
+      seed: num.seed,
+      epoch: num.epoch,
+      root: values.root,
+      onProgress,
+    })
+    if (tty) process.stderr.write('\n')
+    console.log(values.json ? JSON.stringify(report, null, 2) : formatReport(report))
+    if (report.errors > 0) process.exitCode = 1
+    return
+  }
+
   if (command === 'stills') {
     const res = await stills({ ...common, outDir: values.output, count: num.count, at })
     console.log(`${res.files.length} stills, contact sheet: ${res.contactSheet}`)
@@ -140,7 +173,6 @@ async function main(argv: string[]) {
     interrupted = true
     controller.abort()
   })
-  const tty = process.stderr.isTTY
   const res = await render({
     ...common,
     output: values.output,
@@ -150,12 +182,23 @@ async function main(argv: string[]) {
     audio: values.audio,
     format: values.format as Format | undefined,
     signal: controller.signal,
-    onProgress: tty
-      ? ({ frame, total }) => process.stderr.write(`\rframes ${frame}/${total}`)
-      : undefined,
+    onProgress,
   })
   if (tty) process.stderr.write('\n')
   console.log(`${res.output}  (${res.frames} frames in ${res.seconds.toFixed(1)}s)`)
+}
+
+/** The report for a person: notes, then each finding over its hint, then the totals. */
+function formatReport(r: CheckReport): string {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+  const width = Math.max(0, ...r.findings.map((f) => f.id.length))
+  const lines = [...r.notes]
+  for (const f of r.findings) {
+    lines.push(`${f.severity.padEnd(5)}  ${f.id.padEnd(width)}  ${f.message}`)
+    lines.push(`${' '.repeat(width + 9)}→ ${f.hint}`)
+  }
+  lines.push(`${plural(r.errors, 'error')}, ${plural(r.warnings, 'warning')}`)
+  return lines.join('\n')
 }
 
 main(process.argv.slice(2)).catch((err: unknown) => {

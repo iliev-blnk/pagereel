@@ -187,6 +187,15 @@ describe('clippedRule', () => {
     expect(f[0]).toMatchObject({ id: 'text-clipped', severity: 'error' })
   })
 
+  it('ends the span at the end of the reel, not a step past it', () => {
+    const f = clippedRule(
+      samples(3, () => [box({ clipped: true })]),
+      STEP,
+      0.6,
+    )
+    expect(f[0]).toMatchObject({ to: 0.6, message: expect.stringContaining('0.00–0.60 s') })
+  })
+
   it('ignores clipping that lasts 2 samples', () => {
     expect(
       clippedRule(
@@ -208,6 +217,15 @@ describe('readingTimeRule', () => {
 
   it('accepts 9 words held for 3.25 s', () => {
     expect(readingTimeRule(samples(16, nine(3.25)), STEP)).toEqual([])
+  })
+
+  it('counts only the time left before the reel ends', () => {
+    const f = readingTimeRule(
+      samples(4, () => [box({ words: 1 })]),
+      STEP,
+      0.8,
+    )
+    expect(f[0]?.message).toContain('on screen for 0.80 s')
   })
 
   it('accepts one word held for 1 s', () => {

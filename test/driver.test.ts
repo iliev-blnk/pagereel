@@ -1,6 +1,6 @@
 import type { Browser } from 'playwright-core'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { detect, launchBrowser, type OpenOptions, openPage } from '../src/driver'
+import { detect, launchBrowser, type OpenOptions, openPage, retry } from '../src/driver'
 import { PagereelError } from '../src/errors'
 import { resolveSource, type Source } from '../src/serve'
 import { decode, pixel, redStart, redWidth } from './support/pixels'
@@ -187,5 +187,54 @@ describe('frame accounting', () => {
       await a.close()
       await b.close()
     }
+  })
+})
+
+describe('retry', () => {
+  const unable = () =>
+    new Error('Protocol error (Page.captureScreenshot): Unable to capture screenshot')
+  const transient = (err: unknown) => String(err).includes('Unable to capture screenshot')
+
+  it('tries a transient failure again until it succeeds', async () => {
+    let calls = 0
+    const value = await retry(
+      async () => {
+        calls++
+        if (calls < 3) throw unable()
+        return 'png'
+      },
+      transient,
+      [1, 1, 1],
+    )
+    expect(value).toBe('png')
+    expect(calls).toBe(3)
+  })
+
+  it('rethrows any other failure at once', async () => {
+    let calls = 0
+    const fail = retry(
+      async () => {
+        calls++
+        throw new Error('Target closed')
+      },
+      transient,
+      [1, 1, 1],
+    )
+    await expect(fail).rejects.toThrow('Target closed')
+    expect(calls).toBe(1)
+  })
+
+  it('gives up after the last delay', async () => {
+    let calls = 0
+    const fail = retry(
+      async () => {
+        calls++
+        throw unable()
+      },
+      transient,
+      [1, 1],
+    )
+    await expect(fail).rejects.toThrow('Unable to capture screenshot')
+    expect(calls).toBe(3)
   })
 })

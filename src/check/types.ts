@@ -52,9 +52,12 @@ export interface FrameStat {
   t: number
   /** Mean relative luminance, 0–1. */
   mean: number
-  /** Standard deviation of luma, 0–255. */
+  /** Standard deviation of the most varied RGB channel, 0–255. */
   std: number
-  /** Mean absolute luma difference from the previous frame, 0–255; 0 for the first frame. */
+  /**
+   * Mean absolute difference from the previous frame in the RGB channel that changed most,
+   * 0–255; 0 for the first frame.
+   */
   diff: number
 }
 

@@ -84,6 +84,17 @@ describe('cli', () => {
     expect(r.status, r.stderr).toBe(0)
     expect(existsSync(join(out, 'contact.png'))).toBe(true)
   })
+  it('fails a reel with check errors and names the rule', () => {
+    const r = cli('check', 'test/fixtures/check/safe-zone.html')
+    expect(r.status, r.stderr).toBe(1)
+    expect(r.stdout).toContain('safe-zone')
+  })
+
+  it('prints the check report as JSON', () => {
+    const r = cli('check', 'test/fixtures/check/good.html', '--json')
+    expect(r.status, r.stderr).toBe(0)
+    expect(JSON.parse(r.stdout)).toMatchObject({ errors: 0 })
+  })
 })
 
 describe('preview player', () => {
