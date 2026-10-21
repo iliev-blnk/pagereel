@@ -1,0 +1,15 @@
+{
+  "name": "pagereel",
+  "description": "The pagereel plugin for Claude Code: the reel skill and pagereel's tools.",
+  "owner": {
+    "name": "Ilie Beleniuc"
+  },
+  "plugins": [
+    {
+      "name": "pagereel",
+      "source": "./plugin",
+      "description": "Make an Instagram reel from a one-line brief: a scene written as a web page, a lint for what reels get wrong, a scored review of its own frames, a soundtrack and the MP4.",
+      "version": "0.2.0"
+    }
+  ]
+}

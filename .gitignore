@@ -5,3 +5,4 @@ src/page/generated.ts
 *.log
 /out
 site/media
+.demo

@@ -1,0 +1,10 @@
+{
+  "name": "pagereel",
+  "version": "0.2.0",
+  "description": "Make an Instagram reel from a one-line brief. The reel skill plans it, writes it as a web page, lints it for what reels get wrong, scores its own frames, scores a soundtrack on the same beat grid and renders the MP4.",
+  "author": { "name": "Ilie Beleniuc", "url": "https://github.com/iliev-blnk" },
+  "homepage": "https://github.com/iliev-blnk/pagereel#readme",
+  "repository": "https://github.com/iliev-blnk/pagereel",
+  "license": "MIT",
+  "keywords": ["reels", "instagram", "video", "motion", "mcp"]
+}

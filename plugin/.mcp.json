@@ -1,0 +1,6 @@
+{
+  "pagereel": {
+    "command": "npx",
+    "args": ["-y", "pagereel@^0.2.0", "mcp"]
+  }
+}
