@@ -1,8 +1,10 @@
 import { execFileSync } from 'node:child_process'
 import { copyFileSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { createServer, type Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { type SiteKit, siteKit } from '../src/site-kit'
 
 const dir = mkdtempSync(join(tmpdir(), 'pagereel-test-site-'))
@@ -105,6 +107,44 @@ describe('siteKit on a long page', () => {
   it('has no logo or og:image to save when the page links none', () => {
     expect(kit.files.logo).toBeUndefined()
     expect(kit.files.og).toBeUndefined()
+  })
+})
+
+describe('siteKit on a page with a request that never finishes', () => {
+  let server: Server
+  let origin: string
+  const pages: Record<string, string> = {
+    '/image': '<!doctype html><title>Slow image</title><h1>Still here</h1><img src="/never.png">',
+    '/font': `<!doctype html><title>Slow font</title>
+      <style>@font-face { font-family: Never; src: url(/never.woff2) } body { font-family: Never }</style>
+      <h1>Still here</h1>`,
+  }
+
+  beforeAll(async () => {
+    // Every path but the pages above is left unanswered, as a stuck CDN or tracker leaves it.
+    server = createServer((req, res) => {
+      const page = pages[req.url ?? '']
+      if (page) res.writeHead(200, { 'content-type': 'text/html' }).end(page)
+    })
+    await new Promise<void>((done) => server.listen(0, '127.0.0.1', done))
+    origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  })
+
+  afterAll(() => {
+    server.closeAllConnections()
+    server.close()
+  })
+
+  it('reads a page whose load event an image holds up', async () => {
+    const kit = await siteKit(`${origin}/image`, join(dir, 'slow-image'))
+    expect(kit.title).toBe('Slow image')
+    expect(kit.headings).toEqual(['Still here'])
+  })
+
+  it('reads a page whose web font never arrives', async () => {
+    const kit = await siteKit(`${origin}/font`, join(dir, 'slow-font'))
+    expect(kit.title).toBe('Slow font')
+    expect(kit.fonts[0]?.family).toBe('Never')
   })
 })
 

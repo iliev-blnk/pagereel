@@ -27,6 +27,10 @@ const WIDTH = 1280
 const HEIGHT = 800
 /** How far down the full-page screenshot goes. */
 const MAX_HEIGHT = 6000
+/** How long to wait for the load event, which one stuck image or tracker can hold up for good. */
+const LOAD_WAIT = 10_000
+/** How long to wait for web fonts: `document.fonts.ready` waits on a font that never arrives. */
+const FONTS_WAIT = 5_000
 const EXTENSIONS: Record<string, string> = {
   'image/svg+xml': 'svg',
   'image/png': 'png',
@@ -49,8 +53,14 @@ export async function siteKit(url: string, outDir: string): Promise<SiteKit> {
   try {
     browser = await launchBrowser()
     const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } })
-    await page.goto(source.url, { waitUntil: 'load' })
-    await page.evaluate('document.fonts.ready.then(() => {})')
+    await page.goto(source.url, { waitUntil: 'domcontentloaded' })
+    // What the kit reads is there once the DOM is; images only fill in the screenshots.
+    await page.waitForLoadState('load', { timeout: LOAD_WAIT }).catch(() => {})
+    await page.evaluate(
+      `Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, ${FONTS_WAIT}))]).then(() => {})`,
+    )
+    // What hasn't arrived by now won't. Stopping it lets the screenshots, which wait on fonts, run.
+    await page.evaluate('window.stop()')
     await page.evaluate(SITEKIT_JS)
     const { logo, og, ...kit } = await page.evaluate<PageKit>('window.__pagereelSiteKit()')
 
