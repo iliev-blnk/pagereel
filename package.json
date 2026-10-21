@@ -33,7 +33,7 @@
     "dist"
   ],
   "bin": {
-    "pagereel": "./dist/cli.js"
+    "pagereel": "dist/cli.js"
   },
   "exports": {
     ".": {
