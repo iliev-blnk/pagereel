@@ -96,8 +96,9 @@ Each round:
    not a fix: a problem you would leave isn't one of the three worst, so look again.
 6. If `check` had no errors and every score is 8 or more, this was the last round: its three
    lines are the fixes you would make next, and the picture doesn't change again. Otherwise make
-   the three fixes and start the next round. Round 4 is the last either way; if it falls short,
-   add a line under it saying what still does.
+   the three fixes and start the next round: a round with a score under 8 is never the last
+   before round 4. Round 4 is the last either way; if it falls short, add a line under it saying
+   what still does.
 
 ## 5. Sound
 

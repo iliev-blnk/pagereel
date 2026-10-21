@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Reel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@800&display=block" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1f2328;
+      --ink: #f6f8fa;
+      --accent: #2da44e;
+      /* One line of type: its mask's height and its line-height, at least 1.25 times the font
+         size or check reports the type as cut off. */
+      --slot: 174px;
+    }
+    html, body { margin: 0; background: var(--bg); }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Mona Sans', sans-serif;
+    }
+    .shape { position: absolute; left: 0; top: 0; background: var(--accent); }
+    /* Each line of type rolls through its own mask, one slot tall. The masks stack edge to
+       edge, so a line coming in never crosses the line below it. */
+    .mask { position: absolute; left: 96px; right: 0; height: var(--slot); overflow: hidden; }
+    .line {
+      position: absolute;
+      left: 0;
+      top: 0;
+      margin: 0;
+      color: var(--ink);
+      font-size: 120px;
+      font-weight: 800;
+      line-height: var(--slot);
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- A 1080×1920 reel. scene.js builds and moves everything in the stage; timeline.js holds
+       the beat grid; audio.mjs makes audio.wav on the same grid. -->
+  <main id="stage"></main>
+  <script type="module" src="./scene.js"></script>
+</body>
+</html>

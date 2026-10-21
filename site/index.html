@@ -26,6 +26,12 @@
     .mode { color: var(--muted); font-size: 14px; margin: 0 0 10px; }
     section p { margin: 0 0 14px; max-width: 62ch; }
     section a { color: inherit; }
+    .reels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; }
+    .reels video { aspect-ratio: 9 / 16; border: 1px solid var(--line); }
+    .reels h3 { font-size: 16px; margin: 12px 0 2px; }
+    .reels p { font-size: 14px; margin: 0 0 6px; }
+    .reels .mode { margin: 0 0 6px; }
+    @media (max-width: 640px) { .reels { grid-template-columns: 1fr; } .reels video { width: min(320px, 100%); } }
   </style>
 </head>
 <body>
@@ -64,6 +70,37 @@ npx pagereel render page.html --duration 6 -o out.mp4</pre>
       <p>A 12-second UI film where one shape morphs through five states. The page paints any moment with <code>seek(t)</code>; picture and synthesised sound share one beat grid. Unmute it.</p>
       <pre>pagereel render examples/one-shape/index.html --root . -o one-shape.mp4</pre>
       <p><a href="https://github.com/iliev-blnk/pagereel/tree/main/examples/one-shape">View source</a></p>
+    </section>
+
+    <section id="reels">
+      <h2>Reels from a brief</h2>
+      <p class="mode">Claude Code plugin · the reel skill and pagereel mcp</p>
+      <p>Each reel below was made unattended from the one-line brief under it: the agent read the site with <code>site_kit</code>, wrote the scene, linted it with <code>pagereel check</code>, scored its own frames in rounds and scored the soundtrack. Nothing was touched up by hand.</p>
+      <pre>/plugin marketplace add iliev-blnk/pagereel
+/plugin install pagereel@pagereel</pre>
+      <div class="reels">
+        <div>
+          <video src="media/agent-parlo.mp4" autoplay muted loop playsinline controls></video>
+          <h3>parlo</h3>
+          <p>&ldquo;Make a 15–20 s vertical reel for parlo, https://github.com/iliev-blnk/parlo&rdquo;</p>
+          <p class="mode">Sonnet 5.5 · 55 turns · 3 rounds · check 0 → 0 errors · 5 min</p>
+          <p><a href="https://github.com/iliev-blnk/pagereel/blob/main/examples/agent/parlo/REVIEW.md">Review rounds</a> · <a href="https://github.com/iliev-blnk/pagereel/tree/main/examples/agent/parlo">Source</a></p>
+        </div>
+        <div>
+          <video src="media/agent-gridmd.mp4" autoplay muted loop playsinline controls></video>
+          <h3>grid.md</h3>
+          <p>&ldquo;Make a 15–20 s vertical reel for grid.md, https://iliev-blnk.github.io/grid.md/&rdquo;</p>
+          <p class="mode">Sonnet 5.5 · 49 turns · 2 rounds · check 2 → 0 errors · 5 min</p>
+          <p><a href="https://github.com/iliev-blnk/pagereel/blob/main/examples/agent/gridmd/REVIEW.md">Review rounds</a> · <a href="https://github.com/iliev-blnk/pagereel/tree/main/examples/agent/gridmd">Source</a></p>
+        </div>
+        <div>
+          <video src="media/agent-holdshort.mp4" autoplay muted loop playsinline controls></video>
+          <h3>holdshort</h3>
+          <p>&ldquo;Make a 15–20 s vertical reel for holdshort, https://holdshort.pages.dev&rdquo;</p>
+          <p class="mode">Sonnet 5.5 · 61 turns · 4 rounds · check 2 → 0 errors · 7 min</p>
+          <p><a href="https://github.com/iliev-blnk/pagereel/blob/main/examples/agent/holdshort/REVIEW.md">Review rounds</a> · <a href="https://github.com/iliev-blnk/pagereel/tree/main/examples/agent/holdshort">Source</a></p>
+        </div>
+      </div>
     </section>
   </main>
 </body>

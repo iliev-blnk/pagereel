@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>holdshort</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800&display=block" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1b1f24;
+      --ink: #e6e9ec;
+      --blue: #4da3ff;
+      --orange: #ff9f43;
+    }
+    html, body { margin: 0; background: var(--bg); }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: Inter, sans-serif;
+    }
+    .field { position: absolute; left: 0; top: 0; width: 1080px; height: 940px; overflow: hidden; }
+    .cam { position: absolute; inset: 0; transform-origin: 560px 260px; }
+    .runway { position: absolute; top: 440px; width: 12px; height: 320px; margin-left: -6px;
+      background: var(--ink); transform-origin: 50% 0; }
+    .rwy { position: absolute; top: 772px; width: 140px; margin-left: -70px; text-align: center;
+      font-size: 44px; font-weight: 500; line-height: 55px; color: var(--ink); opacity: 0.72; }
+    .plane { position: absolute; left: 0; top: 0; }
+    .arrow { position: absolute; left: -33px; top: -42px; width: 66px; height: 84px;
+      clip-path: polygon(50% 0, 100% 100%, 50% 78%, 0 100%); }
+    .tail { position: absolute; left: -3px; top: 42px; width: 6px; height: 150px; opacity: 0.35; }
+    .ring { position: absolute; left: -80px; top: -80px; width: 160px; height: 160px;
+      box-sizing: border-box; border: 6px solid var(--ink); border-radius: 50%; }
+    .mask { position: absolute; left: 96px; right: 0; overflow: hidden; }
+    .line { position: absolute; left: 0; top: 0; margin: 0; color: var(--ink); font-weight: 800;
+      letter-spacing: -0.03em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .line.label { font-weight: 500; letter-spacing: -0.01em; color: rgba(230, 233, 236, 0.88); }
+    .line.url { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <main id="stage"></main>
+  <script type="module" src="./scene.js"></script>
+</body>
+</html>

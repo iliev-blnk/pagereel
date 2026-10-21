@@ -1,0 +1,36 @@
+[
+  {
+    "name": "parlo",
+    "brief": "Make a 15–20 s vertical reel for parlo, https://github.com/iliev-blnk/parlo",
+    "model": "Sonnet 5.5",
+    "turns": 55,
+    "minutes": 5,
+    "rounds": 3,
+    "firstCheck": "0 errors, 0 warnings",
+    "lastCheck": "0 errors, 0 warnings",
+    "ok": true,
+    "firstRun": "site_kit timed out twice on the GitHub page, so the agent had no real copy and stopped"
+  },
+  {
+    "name": "gridmd",
+    "brief": "Make a 15–20 s vertical reel for grid.md, https://iliev-blnk.github.io/grid.md/",
+    "model": "Sonnet 5.5",
+    "turns": 49,
+    "minutes": 5.3,
+    "rounds": 2,
+    "firstCheck": "2 errors, 18 warnings",
+    "lastCheck": "0 errors, 13 warnings",
+    "ok": true
+  },
+  {
+    "name": "holdshort",
+    "brief": "Make a 15–20 s vertical reel for holdshort, https://holdshort.pages.dev",
+    "model": "Sonnet 5.5",
+    "turns": 61,
+    "minutes": 7.2,
+    "rounds": 4,
+    "firstCheck": "2 errors, 11 warnings",
+    "lastCheck": "0 errors, 0 warnings",
+    "ok": true
+  }
+]

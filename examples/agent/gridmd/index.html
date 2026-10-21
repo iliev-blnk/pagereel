@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>grid.md</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Sans:wght@500;700&display=block" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #0e1116;
+      --accent: #1838e6;
+      --grey: #5b6472;
+    }
+    html, body { margin: 0; background: var(--bg); }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+    #chart { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    #bars { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .bar { position: absolute; left: 96px; height: 90px; }
+    .label { position: absolute; left: 96px; margin: 0; font-size: 52px; line-height: 68px; font-weight: 500; white-space: nowrap; color: var(--ink); }
+    .mask { position: absolute; right: 0; overflow: hidden; }
+    .line {
+      position: absolute;
+      left: 0;
+      top: 0;
+      margin: 0;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .sans { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+    .num { font-family: "Big Shoulders Display", "Arial Narrow", sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+  </style>
+</head>
+<body>
+  <main id="stage"></main>
+  <script type="module" src="./scene.js"></script>
+</body>
+</html>

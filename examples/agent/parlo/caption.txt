@@ -1,0 +1,2 @@
+Live captions and translation for talks, fully offline. One laptop listens, the projector shows it, phones follow in their own language.
+npm i -g parlo-captions · https://github.com/iliev-blnk/parlo #opensource #accessibility #offline
