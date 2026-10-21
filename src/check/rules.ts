@@ -349,18 +349,30 @@ export function flashRule(frames: FrameStat[], fps: number): Finding[] {
   }))
 }
 
-/** Loudness and true peak, measured with ffmpeg's ebur128 filter. */
-export function audioRule(stats: AudioStats | null): Finding[] {
+/**
+ * Loudness and true peak, measured with ffmpeg's ebur128 filter. `missing` names a track the
+ * scene declares that does not exist yet.
+ */
+export function audioRule(stats: AudioStats | null, missing?: string): Finding[] {
   if (!stats)
     return [
-      {
-        id: 'audio',
-        severity: 'warn',
-        from: 0,
-        to: 0,
-        message: 'There is no audio',
-        hint: 'Add a track: set window.pagereel.audio in the scene or pass --audio <file>.',
-      },
+      missing
+        ? {
+            id: 'audio',
+            severity: 'warn',
+            from: 0,
+            to: 0,
+            message: `The scene's audio, ${missing}, was not found`,
+            hint: 'Make the track before you render (render needs it), or remove window.pagereel.audio.',
+          }
+        : {
+            id: 'audio',
+            severity: 'warn',
+            from: 0,
+            to: 0,
+            message: 'There is no audio',
+            hint: 'Add a track: set window.pagereel.audio in the scene or pass --audio <file>.',
+          },
     ]
   const out: Finding[] = []
   if (stats.truePeak > -1)

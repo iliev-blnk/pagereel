@@ -338,4 +338,10 @@ describe('audioRule', () => {
   it('warns about a quiet mix', () => {
     expect(audioRule({ integrated: -22, truePeak: -3 }).map((x) => x.severity)).toEqual(['warn'])
   })
+
+  it('names the track a scene declares when it is not made yet', () => {
+    expect(audioRule(null, 'sound/track.wav')).toMatchObject([
+      { id: 'audio', severity: 'warn', message: expect.stringContaining('sound/track.wav') },
+    ])
+  })
 })

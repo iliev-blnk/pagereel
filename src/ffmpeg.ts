@@ -1,7 +1,10 @@
 import { type ChildProcess, spawn } from 'node:child_process'
 import { once } from 'node:events'
+import { existsSync } from 'node:fs'
 import { rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import type { AudioStats } from './check/types.js'
+import { PagereelError } from './errors.js'
 import type { Format } from './options.js'
 
 const children = new Set<ChildProcess>()
@@ -180,4 +183,43 @@ export async function psnr(cmd: string, a: string, b: string): Promise<number> {
   const value = log.match(/average:(\S+)/)?.[1]
   if (!value) throw new Error('ffmpeg did not report PSNR')
   return value === 'inf' ? Number.POSITIVE_INFINITY : Number(value)
+}
+
+/** How loudness() starts its message when the audio is not there. */
+export const AUDIO_NOT_FOUND = 'Audio file not found'
+
+const level = (v: string) => (v === '-inf' ? Number.NEGATIVE_INFINITY : Number(v))
+
+/** Integrated loudness and true peak of an audio file or URL, from ffmpeg's ebur128 filter. */
+export async function loudness(cmd: string, file: string): Promise<AudioStats> {
+  if (!/^https?:\/\//i.test(file) && !existsSync(file)) {
+    throw new PagereelError(`${AUDIO_NOT_FOUND}: ${file}`)
+  }
+  const child = spawn(
+    cmd,
+    ['-nostats', '-i', file, '-vn', '-af', 'ebur128=peak=true', '-f', 'null', '-'],
+    { stdio: ['ignore', 'ignore', 'pipe'] },
+  )
+  children.add(child)
+  // ebur128 logs a line every 100 ms of audio; the summary comes last.
+  let log = ''
+  child.stderr?.on('data', (d) => {
+    log = (log + d).slice(-16_000)
+  })
+  const [code] = await once(child, 'close')
+  children.delete(child)
+  if (code !== 0) {
+    if (log.includes('404 Not Found')) throw new PagereelError(`${AUDIO_NOT_FOUND}: ${file}`)
+    if (log.includes('does not contain any stream')) {
+      throw new PagereelError(`${file} has no audio track.`)
+    }
+    const last = (log.trim().split('\n').at(-1) ?? '').replace(/^Error opening \w+ files?: /, '')
+    throw new PagereelError(`Could not read the audio in ${file}: ${last}`)
+  }
+  const summary = log.slice(log.lastIndexOf('Summary:'))
+  const integrated = /I:\s+(-?inf|-?[\d.]+) LUFS/.exec(summary)?.[1]
+  const peak = /True peak:\s+Peak:\s+(-?inf|-?[\d.]+) dBFS/.exec(summary)?.[1]
+  if (!integrated || !peak)
+    throw new PagereelError(`ffmpeg did not report the loudness of ${file}.`)
+  return { integrated: level(integrated), truePeak: level(peak) }
 }

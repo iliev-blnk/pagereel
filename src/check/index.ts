@@ -1,7 +1,9 @@
 import { tmpdir } from 'node:os'
 import type { Browser } from 'playwright-core'
 import { launchBrowser, openPage } from '../driver.js'
+import { findFfmpeg } from '../env.js'
 import { PagereelError } from '../errors.js'
+import { AUDIO_NOT_FOUND, loudness } from '../ffmpeg.js'
 import { type Progress, type RenderOptions, resolveOptions } from '../options.js'
 import { detectMode } from '../render.js'
 import { resolveSource } from '../serve.js'
@@ -49,6 +51,26 @@ const SHORT_SIDE = 1080
 const NO_TEXT =
   'No DOM text found, so safe-zone, size, clipping, reading-time and contrast checks did not run.'
 
+/**
+ * Measures the reel's track. A track the scene declares that is not there yet counts as no
+ * audio, named in the finding: an agent checks a scene before it makes the track.
+ */
+async function audioFindings(
+  file: string | undefined,
+  fromScene: boolean,
+  page: string,
+): Promise<Finding[]> {
+  if (!file) return audioRule(null)
+  try {
+    return audioRule(await loudness(await findFfmpeg(), file))
+  } catch (err) {
+    const missing = err instanceof PagereelError && err.message.startsWith(AUDIO_NOT_FOUND)
+    if (!fromScene || !missing) throw err
+    const dir = new URL('.', page).href
+    return audioRule(null, decodeURIComponent(file.startsWith(dir) ? file.slice(dir.length) : file))
+  }
+}
+
 /** Lints a reel: walks the page's timeline and reports what would go wrong on a phone. */
 export async function check(input: CheckOptions): Promise<CheckReport> {
   const started = Date.now()
@@ -64,6 +86,8 @@ export async function check(input: CheckOptions): Promise<CheckReport> {
     browser = await launchBrowser()
     const { mode, scene } = await detectMode(browser, source.url, input.mode)
     const o = resolveOptions({ ...input, scale: 1, format: 'png', output: tmpdir() }, mode, scene)
+    // Before the frame walk, so a missing --audio file fails fast.
+    const audio = await audioFindings(o.audio, !input.audio, source.url)
     const driver = await openPage(browser, source.url, o)
     let collected: Awaited<ReturnType<typeof collect>>
     try {
@@ -101,7 +125,7 @@ export async function check(input: CheckOptions): Promise<CheckReport> {
       ...hookRule(frames),
       ...deadAirRule(frames, o.fps),
       ...flashRule(frames, o.fps),
-      ...audioRule(null),
+      ...audio,
     )
     findings.sort((a, b) =>
       a.severity === b.severity ? a.from - b.from : a.severity === 'error' ? -1 : 1,
